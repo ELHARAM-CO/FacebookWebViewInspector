@@ -7,6 +7,17 @@
             <Button android:id="@+id/testReply" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="اختبار Reply"/>
             <Button android:id="@+id/testLike" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="اختبار Like"/>
         </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <EditText android:id="@+id/intervalInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="number" android:text="10" android:hint="الفاصل بالثواني"/>
+            <EditText android:id="@+id/countInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="number" android:text="3" android:hint="عدد الدورات"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Button android:id="@+id/startTimer" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="بدء اختبار التكرار"/>
+            <Button android:id="@+id/stopTimer" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="إيقاف"/>
+        </LinearLayout>
+        <TextView android:id="@+id/spacerValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="المسافة: 40dp" android:textSize="12sp"/>
+        <SeekBar android:id="@+id/spacerSeek" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progress="40"/>
+        <View android:id="@+id/spacer" android:layout_width="match_parent" android:layout_height="40dp"/>
         <TextView android:id="@+id/results" android:layout_width="match_parent" android:layout_height="160dp" android:background="#F4F4F4" android:padding="8dp" android:textIsSelectable="true" android:textSize="12sp" android:gravity="top"/>
     </LinearLayout>
     <WebView android:id="@+id/web" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
