@@ -11,13 +11,13 @@ import org.json.*;
 
 public class MainActivity extends Activity {
     WebView web; TextView results,status,spacerValue;
-    Button scan,testReply,testLike,startTimer,stopTimer;
-    EditText intervalInput,countInput;
+    Button scan,testReply,testLike,stopTimer;
+    EditText intervalInput;
     View spacer;
     SeekBar spacerSeek;
     Handler handler=new Handler();
     Runnable timerTask;
-    int runIndex=0,runCount=3;
+    int runIndex=0;
     long intervalMs=10000;
 
     String scanJs = "" +
@@ -33,8 +33,8 @@ public class MainActivity extends Activity {
       super.onCreate(b); setContentView(R.layout.activity_main);
       web=findViewById(R.id.web); results=findViewById(R.id.results); status=findViewById(R.id.status);
       scan=findViewById(R.id.scan); testReply=findViewById(R.id.testReply); testLike=findViewById(R.id.testLike);
-      startTimer=findViewById(R.id.startTimer); stopTimer=findViewById(R.id.stopTimer);
-      intervalInput=findViewById(R.id.intervalInput); countInput=findViewById(R.id.countInput);
+      stopTimer=findViewById(R.id.stopTimer);
+      intervalInput=findViewById(R.id.intervalInput);
       spacer=findViewById(R.id.spacer); spacerSeek=findViewById(R.id.spacerSeek); spacerValue=findViewById(R.id.spacerValue);
 
       WebSettings s=web.getSettings();
@@ -46,8 +46,7 @@ public class MainActivity extends Activity {
 
       scan.setOnClickListener(v->runScan());
       testReply.setOnClickListener(v->runTest("reply"));
-      testLike.setOnClickListener(v->runTest("like"));
-      startTimer.setOnClickListener(v->startRepeatedDetection());
+      testLike.setOnClickListener(v->startRepeatedLike());
       stopTimer.setOnClickListener(v->stopRepeatedDetection());
 
       spacerSeek.setMax(300);
@@ -82,53 +81,91 @@ public class MainActivity extends Activity {
     }
 
     void runTest(String kind){
-      status.setText("جاري اختبار "+kind+"...");
+      status.setText("جاري تنفيذ "+kind+"...");
       web.evaluateJavascript(buildClickJs(kind),val->{
-        try{JSONObject o=new JSONObject(unquote(val));results.setText(o.toString(2));status.setText(o.optString("message","انتهى الاختبار"));}
-        catch(Exception e){results.setText(val);status.setText("انتهى الاختبار");}
+        try{
+          JSONObject o=new JSONObject(unquote(val));
+          results.setText(o.toString(2));
+          status.setText(o.optString("message","انتهى التنفيذ"));
+        }catch(Exception e){
+          results.setText(val);
+          status.setText("انتهى التنفيذ");
+        }
       });
     }
 
-    void startRepeatedDetection(){
+    void startRepeatedLike(){
       stopRepeatedDetection();
-      try{intervalMs=Math.max(1000,Long.parseLong(intervalInput.getText().toString().trim())*1000L);}catch(Exception e){intervalMs=10000;}
-      try{runCount=Math.max(1,Integer.parseInt(countInput.getText().toString().trim()));}catch(Exception e){runCount=3;}
+      try{
+        intervalMs=Math.max(1000,Long.parseLong(intervalInput.getText().toString().trim())*1000L);
+      }catch(Exception e){
+        intervalMs=10000;
+      }
+
       runIndex=0;
-      results.setText("بدأ اختبار التكرار: "+runCount+" دورات، كل "+(intervalMs/1000)+" ثانية.\nلا يتم إرسال Likes متكررة؛ يتم الفحص وتسجيل ما كان سيحدث.");
-      status.setText("الدورة 0/"+runCount);
-      timerTask=new Runnable(){@Override public void run(){
-        if(runIndex>=runCount){status.setText("اكتمل اختبار التكرار");return;}
-        runIndex++;
-        final int n=runIndex;
-        web.evaluateJavascript(buildFindLikeJs(),val->{
-          try{
-            JSONObject o=new JSONObject(unquote(val));
-            String line="الدورة "+n+"/"+runCount+" — "+o.optString("message");
-            results.append("\n"+line);
-            status.setText("الدورة "+n+"/"+runCount);
-          }catch(Exception e){results.append("\nالدورة "+n+"/"+runCount+" — تعذر قراءة النتيجة");}
-        });
-        if(runIndex<runCount) handler.postDelayed(this,intervalMs);
-        else handler.postDelayed(()->status.setText("اكتمل اختبار التكرار"),300);
-      }};
+      results.setText("بدأ اللايك التلقائي.\nالفاصل الزمني: "+(intervalMs/1000)+" ثانية.\nاضغط «إيقاف» لإنهاء التكرار.");
+      status.setText("جاري تنفيذ اللايك...");
+
+      timerTask=new Runnable(){
+        @Override public void run(){
+          runIndex++;
+          final int n=runIndex;
+
+          web.evaluateJavascript(buildActualLikeJs(),val->{
+            try{
+              JSONObject o=new JSONObject(unquote(val));
+              String line="الدورة "+n+" — "+o.optString("message");
+              results.append("\n"+line);
+              status.setText("الدورة "+n+" — "+o.optString("message"));
+            }catch(Exception e){
+              results.append("\nالدورة "+n+" — تعذر قراءة النتيجة");
+              status.setText("الدورة "+n);
+            }
+          });
+
+          if(timerTask!=null){
+            handler.postDelayed(this,intervalMs);
+          }
+        }
+      };
+
       handler.post(timerTask);
     }
 
     void stopRepeatedDetection(){
       if(timerTask!=null) handler.removeCallbacks(timerTask);
       timerTask=null;
-      if(status!=null) status.setText("تم إيقاف الاختبار");
+      if(status!=null) status.setText("تم إيقاف اللايك التلقائي");
     }
 
-    String buildFindLikeJs(){
-      return "(()=>{const keys=['like','likes','إعجاب','اعجاب','أعجبني'];const norm=s=>(s||'').replace(/\\s+/g,' ').trim();" +
-      "const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];let hit=null,best=-1;" +
-      "for(const e of els){const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),q=e.getBoundingClientRect();" +
-      "if(q.width<=0||q.height<=0)continue;const hay=(t+' '+a+' '+title).toLowerCase();let score=0;" +
-      "for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(title.toLowerCase()===x.toLowerCase())score+=80;if(t.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}" +
-      "if((e.getAttribute('role')==='button'||e.tagName==='BUTTON')&&score>0)score+=20;if(score>best){best=score;hit=e;}}" +
-      "if(!hit)return JSON.stringify({ok:false,message:'لم يتم العثور على زر Like ظاهر'});" +
-      "return JSON.stringify({ok:true,message:'تم العثور على زر Like: '+norm(hit.innerText||hit.getAttribute('aria-label')||'بدون نص')});})()";
+    String buildActualLikeJs(){
+      return "(()=>{const keys=['like','likes','إعجاب','اعجاب','أعجبني'];" +
+      "const norm=s=>(s||'').replace(/\\s+/g,' ').trim();" +
+      "const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];" +
+      "let hit=null,best=-1;" +
+      "for(const e of els){" +
+      "const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title'))," +
+      "pressed=norm(e.getAttribute('aria-pressed')),q=e.getBoundingClientRect();" +
+      "if(q.width<=0||q.height<=0)continue;" +
+      "const hay=(t+' '+a+' '+title).toLowerCase();" +
+      "if(/unlike|remove like|إلغاء الإعجاب|إلغاء اعجاب|أعجبني/.test(a.toLowerCase()) && a.toLowerCase().indexOf('like')>=0)continue;" +
+      "if(pressed==='true')continue;" +
+      "let score=0;" +
+      "for(const x of keys){" +
+      "if(a.toLowerCase()===x.toLowerCase())score+=100;" +
+      "if(title.toLowerCase()===x.toLowerCase())score+=80;" +
+      "if(t.toLowerCase()===x.toLowerCase())score+=70;" +
+      "if(hay.includes(x.toLowerCase()))score+=10;}" +
+      "if((e.getAttribute('role')==='button'||e.tagName==='BUTTON')&&score>0)score+=20;" +
+      "if(score>best){best=score;hit=e;}" +
+      "}" +
+      "if(!hit)return JSON.stringify({ok:false,clicked:false,message:'لم يتم العثور على زر Like غير مُعجب به ظاهر'});" +
+      "hit.scrollIntoView({block:'center',inline:'center'});" +
+      "const before=norm(hit.innerText)+' | '+norm(hit.getAttribute('aria-label'))+' | '+norm(hit.getAttribute('aria-pressed'));" +
+      "hit.click();" +
+      "return JSON.stringify({ok:true,clicked:true,tag:hit.tagName,text:norm(hit.innerText)," +
+      "aria:norm(hit.getAttribute('aria-label')),role:norm(hit.getAttribute('role')),before:before,score:best," +
+      "message:'تم تنفيذ Like فعليًا'});})()";
     }
 
     String buildClickJs(String kind){

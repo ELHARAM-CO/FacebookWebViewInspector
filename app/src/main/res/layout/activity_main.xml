@@ -5,14 +5,10 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/scan" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="فحص الصفحة"/>
             <Button android:id="@+id/testReply" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="اختبار Reply"/>
-            <Button android:id="@+id/testLike" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="اختبار Like"/>
+            <Button android:id="@+id/testLike" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Like"/>
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <EditText android:id="@+id/intervalInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="number" android:text="10" android:hint="الفاصل بالثواني"/>
-            <EditText android:id="@+id/countInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="number" android:text="3" android:hint="عدد الدورات"/>
-        </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <Button android:id="@+id/startTimer" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="بدء اختبار التكرار"/>
+            <EditText android:id="@+id/intervalInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="number" android:text="10" android:hint="الفاصل الزمني بالثواني"/>
             <Button android:id="@+id/stopTimer" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="إيقاف"/>
         </LinearLayout>
         <TextView android:id="@+id/spacerValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="المسافة: 40dp" android:textSize="12sp"/>
