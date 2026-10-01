@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
+        <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="جاهز للفحص" android:textSize="14sp" android:padding="4dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Button android:id="@+id/scan" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="فحص الصفحة"/>
+            <Button android:id="@+id/testReply" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="اختبار Reply"/>
+            <Button android:id="@+id/testLike" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="اختبار Like"/>
+        </LinearLayout>
+        <TextView android:id="@+id/results" android:layout_width="match_parent" android:layout_height="160dp" android:background="#F4F4F4" android:padding="8dp" android:textIsSelectable="true" android:textSize="12sp" android:gravity="top"/>
+    </LinearLayout>
+    <WebView android:id="@+id/web" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+</LinearLayout>
