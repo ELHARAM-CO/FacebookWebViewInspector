@@ -64,7 +64,7 @@ public class MainActivity extends Activity {
 
       divider.setOnTouchListener(new View.OnTouchListener(){
         float downY; int startHeight;
-        public boolean onTouch(View v, android.view.MotionEvent e){
+        public boolean onTouch(View v, MotionEvent e){
           if(e.getAction()==MotionEvent.ACTION_DOWN){ downY=e.getRawY(); startHeight=appPanel.getHeight(); return true; }
           if(e.getAction()==MotionEvent.ACTION_MOVE){
             int h=(int)(startHeight+(e.getRawY()-downY));
@@ -80,6 +80,7 @@ public class MainActivity extends Activity {
           return true;
         }
       });
+
       collapseBtn.setOnClickListener(v->setFullscreen(false));
     }
 
@@ -88,12 +89,19 @@ public class MainActivity extends Activity {
         appPanel.setVisibility(View.GONE);
         divider.setVisibility(View.GONE);
         collapseBtn.setVisibility(View.VISIBLE);
-        webContainer.setLayoutParams(new FrameLayout.LayoutParams(-1,0,Gravity.BOTTOM));
+        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(-1,-1);
+        lp.gravity=Gravity.BOTTOM;
+        webContainer.setLayoutParams(lp);
       }else{
         appPanel.setVisibility(View.VISIBLE);
         divider.setVisibility(View.VISIBLE);
         collapseBtn.setVisibility(View.GONE);
-        webContainer.setLayoutParams(new FrameLayout.LayoutParams(-1,0,Gravity.BOTTOM));
+        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(-1,0);
+        lp.gravity=Gravity.BOTTOM;
+        webContainer.setLayoutParams(lp);
+        webContainer.setLayoutParams(lp);
+        webContainer.setLayoutParams(lp);
+        webContainer.requestLayout();
       }
       webContainer.requestLayout();
     }
@@ -119,7 +127,7 @@ public class MainActivity extends Activity {
       String safe=JSONObject.quote(replyText);
       return "(()=>{const keys=['reply','replies','رد','الرد','الردود','رد على','عرض الردود'];const norm=s=>(s||'').replace(/\\s+/g,' ').trim();const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];let hit=null,best=-1;"+
       "for(const e of els){const q=e.getBoundingClientRect();if(q.width<=0||q.height<=0)continue;const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),hay=(t+' '+a+' '+title).toLowerCase();let score=0;for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(t.toLowerCase()===x.toLowerCase())score+=80;if(title.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}if(score>best){best=score;hit=e;}}"+
-      "if(!hit)return JSON.stringify({ok:false,message:'لم يتم العثور على Reply ظاهر'});hit.scrollIntoView({block:'center',inline:'center'});hit.click();setTimeout(()=>{const inputs=[...document.querySelectorAll('[contenteditable=true],textarea,input')].filter(x=>{const q=x.getBoundingClientRect();return q.width>0&&q.height>0});const box=inputs[inputs.length-1];if(box){box.focus();const val="+safe+";if(box.tagName==='TEXTAREA'||box.tagName==='INPUT'){box.value=val;box.dispatchEvent(new Event('input',{bubbles:true}));}else{document.execCommand('insertText',false,val);box.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:val}));}}},700);return JSON.stringify({ok:true,clicked:true,message:'تم الضغط على أول Reply وتجهيز خانة الرد للنص المدخل. راجع النص واضغط إرسال من Facebook.',text:"+safe+"});})()";
+      "if(!hit)return JSON.stringify({ok:false,message:'لم يتم العثور على Reply ظاهر'});hit.scrollIntoView({block:'center',inline:'center'});hit.click();setTimeout(()=>{const inputs=[...document.querySelectorAll('[contenteditable=true],textarea,input')].filter(x=>{const q=x.getBoundingClientRect();return q.width>0&&q.height>0});const box=inputs[inputs.length-1];if(box){box.focus();const val="+safe+";if(box.tagName==='TEXTAREA'||box.tagName==='INPUT'){box.value=val;box.dispatchEvent(new Event('input',{bubbles:true}));}else{document.execCommand('insertText',false,val);box.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:val}));}}},700);return JSON.stringify({ok:true,clicked:true,message:'تم الضغط على أول Reply وتجهيز خانة الرد للنص المدخل.\\nراجع النص واضغط إرسال من Facebook.',text:"+safe+"});})()";
     }
 
     void setSpacer(int dp){
@@ -159,39 +167,24 @@ public class MainActivity extends Activity {
 
     void startRepeatedLike(){
       stopRepeatedDetection();
-      try{
-        intervalMs=Math.max(1000,Long.parseLong(intervalInput.getText().toString().trim())*1000L);
-      }catch(Exception e){
-        intervalMs=10000;
-      }
-
+      try{ intervalMs=Math.max(1000,Long.parseLong(intervalInput.getText().toString().trim())*1000L); }
+      catch(Exception e){ intervalMs=10000; }
       runIndex=0;
       results.setText("بدأ اللايك التلقائي.\nالفاصل الزمني: "+(intervalMs/1000)+" ثانية.\nاضغط «إيقاف» لإنهاء التكرار.");
       status.setText("جاري تنفيذ اللايك...");
-
       timerTask=new Runnable(){
         @Override public void run(){
-          runIndex++;
-          final int n=runIndex;
-
+          runIndex++; final int n=runIndex;
           web.evaluateJavascript(buildActualLikeJs(),val->{
             try{
               JSONObject o=new JSONObject(unquote(val));
               String line="الدورة "+n+" — "+o.optString("message");
-              results.append("\n"+line);
-              status.setText("الدورة "+n+" — "+o.optString("message"));
-            }catch(Exception e){
-              results.append("\nالدورة "+n+" — تعذر قراءة النتيجة");
-              status.setText("الدورة "+n);
-            }
+              results.append("\n"+line); status.setText("الدورة "+n+" — "+o.optString("message"));
+            }catch(Exception e){ results.append("\nالدورة "+n+" — تعذر قراءة النتيجة"); status.setText("الدورة "+n); }
           });
-
-          if(timerTask!=null){
-            handler.postDelayed(this,intervalMs);
-          }
+          if(timerTask!=null) handler.postDelayed(this,intervalMs);
         }
       };
-
       handler.post(timerTask);
     }
 
@@ -202,42 +195,34 @@ public class MainActivity extends Activity {
     }
 
     String buildActualLikeJs(){
-      return "(()=>{const keys=['like','likes','إعجاب','اعجاب','أعجبني'];" +
-      "const norm=s=>(s||'').replace(/\\s+/g,' ').trim();" +
-      "const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];" +
-      "let hit=null,best=-1;" +
-      "for(const e of els){" +
-      "const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title'))," +
-      "pressed=norm(e.getAttribute('aria-pressed')),q=e.getBoundingClientRect();" +
-      "if(q.width<=0||q.height<=0)continue;" +
-      "const hay=(t+' '+a+' '+title).toLowerCase();" +
-      "if(/unlike|remove like|إلغاء الإعجاب|إلغاء اعجاب|أعجبني/.test(a.toLowerCase()) && a.toLowerCase().indexOf('like')>=0)continue;" +
-      "if(pressed==='true')continue;" +
-      "let score=0;" +
-      "for(const x of keys){" +
-      "if(a.toLowerCase()===x.toLowerCase())score+=100;" +
-      "if(title.toLowerCase()===x.toLowerCase())score+=80;" +
-      "if(t.toLowerCase()===x.toLowerCase())score+=70;" +
-      "if(hay.includes(x.toLowerCase()))score+=10;}" +
-      "if((e.getAttribute('role')==='button'||e.tagName==='BUTTON')&&score>0)score+=20;" +
-      "if(score>best){best=score;hit=e;}" +
-      "}" +
-      "if(!hit)return JSON.stringify({ok:false,clicked:false,message:'لم يتم العثور على زر Like غير مُعجب به ظاهر'});" +
-      "hit.scrollIntoView({block:'center',inline:'center'});" +
-      "const before=norm(hit.innerText)+' | '+norm(hit.getAttribute('aria-label'))+' | '+norm(hit.getAttribute('aria-pressed'));" +
-      "hit.click();" +
-      "return JSON.stringify({ok:true,clicked:true,tag:hit.tagName,text:norm(hit.innerText)," +
-      "aria:norm(hit.getAttribute('aria-label')),role:norm(hit.getAttribute('role')),before:before,score:best," +
-      "message:'تم تنفيذ Like فعليًا'});})()";
+      return "(()=>{const keys=['like','likes','إعجاب','اعجاب','أعجبني'];"+
+      "const norm=s=>(s||'').replace(/\\s+/g,' ').trim();"+
+      "const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];"+
+      "let hit=null,best=-1;"+
+      "for(const e of els){"+
+      "const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),pressed=norm(e.getAttribute('aria-pressed')),q=e.getBoundingClientRect();"+
+      "if(q.width<=0||q.height<=0)continue;"+
+      "const hay=(t+' '+a+' '+title).toLowerCase();"+
+      "if(/unlike|remove like|إلغاء الإعجاب|إلغاء اعجاب|أعجبني/.test(a.toLowerCase()) && a.toLowerCase().indexOf('like')>=0)continue;"+
+      "if(pressed==='true')continue;"+
+      "let score=0;"+
+      "for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(title.toLowerCase()===x.toLowerCase())score+=80;if(t.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}"+
+      "if((e.getAttribute('role')==='button'||e.tagName==='BUTTON')&&score>0)score+=20;"+
+      "if(score>best){best=score;hit=e;}}"+
+      "if(!hit)return JSON.stringify({ok:false,clicked:false,message:'لم يتم العثور على زر Like غير مُعجب به ظاهر'});"+
+      "hit.scrollIntoView({block:'center',inline:'center'});"+
+      "const before=norm(hit.innerText)+' | '+norm(hit.getAttribute('aria-label'))+' | '+norm(hit.getAttribute('aria-pressed'));"+
+      "hit.click();"+
+      "return JSON.stringify({ok:true,clicked:true,tag:hit.tagName,text:norm(hit.innerText),aria:norm(hit.getAttribute('aria-label')),role:norm(hit.getAttribute('role')),before:before,score:best,message:'تم تنفيذ Like فعليًا'});})()";
     }
 
     String buildClickJs(String kind){
       String[] keys=kind.equals("reply")?new String[]{"reply","replies","رد","الرد","الردود","رد على","عرض الردود"}:new String[]{"like","likes","إعجاب","اعجاب","أعجبني"};
       String arr=new JSONArray(java.util.Arrays.asList(keys)).toString(),k=kind;
-      return "(()=>{const keys="+arr+";const norm=s=>(s||'').replace(/\\s+/g,' ').trim();const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];let hit=null,best=-1;" +
-      "for(const e of els){const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),q=e.getBoundingClientRect();if(q.width<=0||q.height<=0)continue;const hay=(t+' '+a+' '+title).toLowerCase();let score=0;" +
-      "for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(title.toLowerCase()===x.toLowerCase())score+=80;if(t.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}if((e.getAttribute('role')==='button'||e.tagName==='BUTTON')&&score>0)score+=20;if(score>best){best=score;hit=e;}}" +
-      "if(!hit)return JSON.stringify({ok:false,clicked:false,kind:'"+k+"',message:'لم يتم العثور على زر "+k+" قابل للنقر'});hit.scrollIntoView({block:'center',inline:'center'});const before=norm(hit.innerText)+' | '+norm(hit.getAttribute('aria-label'))+' | '+norm(hit.getAttribute('aria-pressed'));hit.click();" +
+      return "(()=>{const keys="+arr+";const norm=s=>(s||'').replace(/\\s+/g,' ').trim();const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];let hit=null,best=-1;"+
+      "for(const e of els){const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),q=e.getBoundingClientRect();if(q.width<=0||q.height<=0)continue;const hay=(t+' '+a+' '+title).toLowerCase();let score=0;"+
+      "for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(title.toLowerCase()===x.toLowerCase())score+=80;if(t.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}if((e.getAttribute('role')==='button'||e.tagName==='BUTTON')&&score>0)score+=20;if(score>best){best=score;hit=e;}}"+
+      "if(!hit)return JSON.stringify({ok:false,clicked:false,kind:'"+k+"',message:'لم يتم العثور على زر "+k+" قابل للنقر'});hit.scrollIntoView({block:'center',inline:'center'});const before=norm(hit.innerText)+' | '+norm(hit.getAttribute('aria-label'))+' | '+norm(hit.getAttribute('aria-pressed'));hit.click();"+
       "return JSON.stringify({ok:true,clicked:true,kind:'"+k+"',tag:hit.tagName,text:norm(hit.innerText),aria:norm(hit.getAttribute('aria-label')),role:norm(hit.getAttribute('role')),before:before,score:best,message:'تم النقر تلقائيًا على أول زر مطابق. تم تسجيل الحالة قبل النقر.'});})()";
     }
 

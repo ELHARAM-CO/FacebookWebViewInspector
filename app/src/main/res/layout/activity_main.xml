@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent">
-
     <LinearLayout android:id="@+id/appPanel" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
         <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -25,7 +24,6 @@
         <TextView android:id="@+id/results" android:layout_width="match_parent" android:layout_height="120dp"
             android:background="#F4F4F4" android:padding="8dp" android:textIsSelectable="true" android:textSize="12sp" android:gravity="top"/>
     </LinearLayout>
-
     <LinearLayout android:id="@+id/webContainer" android:layout_width="match_parent" android:layout_height="0dp"
         android:layout_gravity="bottom" android:orientation="vertical" android:layout_weight="1">
         <TextView android:id="@+id/divider" android:layout_width="match_parent" android:layout_height="48dp"
@@ -33,7 +31,6 @@
             android:textSize="13sp" android:textStyle="bold" android:clickable="true"/>
         <WebView android:id="@+id/web" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
     </LinearLayout>
-
     <Button android:id="@+id/collapseBtn" android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="top|end" android:text="تصغير ↙" android:visibility="gone" android:elevation="8dp"/>
 </FrameLayout>
