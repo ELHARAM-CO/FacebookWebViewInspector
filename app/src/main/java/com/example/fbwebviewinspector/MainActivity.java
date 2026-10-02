@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
             int min=(int)(110*getResources().getDisplayMetrics().density);
             int max=(int)(getResources().getDisplayMetrics().heightPixels*0.70f);
             h=Math.max(min,Math.min(max,h));
-            appPanel.getLayoutParams().height=h; appPanel.getLayoutParams().weight=0; appPanel.requestLayout(); return true;
+            android.widget.LinearLayout.LayoutParams panelLp=(android.widget.LinearLayout.LayoutParams)appPanel.getLayoutParams(); panelLp.height=h; panelLp.weight=0; appPanel.setLayoutParams(panelLp); appPanel.requestLayout(); return true;
           }
           if(e.getAction()==MotionEvent.ACTION_UP){
             if(Math.abs(e.getRawY()-downY)<12) setFullscreen(true);
