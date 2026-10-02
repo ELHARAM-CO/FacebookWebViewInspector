@@ -11,8 +11,11 @@ import org.json.*;
 
 public class MainActivity extends Activity {
     WebView web; TextView results,status,spacerValue;
-    Button scan,testReply,testLike,stopTimer;
-    EditText intervalInput;
+    Button scan,testReply,testLike,stopTimer,collapseBtn;
+    EditText intervalInput,commentInput;
+    LinearLayout appPanel;
+    FrameLayout webContainer;
+    View divider;
     View spacer;
     SeekBar spacerSeek;
     Handler handler=new Handler();
@@ -36,6 +39,7 @@ public class MainActivity extends Activity {
       stopTimer=findViewById(R.id.stopTimer);
       intervalInput=findViewById(R.id.intervalInput);
       spacer=findViewById(R.id.spacer); spacerSeek=findViewById(R.id.spacerSeek); spacerValue=findViewById(R.id.spacerValue);
+      commentInput=findViewById(R.id.commentInput); appPanel=findViewById(R.id.appPanel); webContainer=findViewById(R.id.webContainer); divider=findViewById(R.id.divider); collapseBtn=findViewById(R.id.collapseBtn);
 
       WebSettings s=web.getSettings();
       s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setDatabaseEnabled(true);
@@ -45,7 +49,7 @@ public class MainActivity extends Activity {
       web.loadUrl("https://www.facebook.com/");
 
       scan.setOnClickListener(v->runScan());
-      testReply.setOnClickListener(v->runTest("reply"));
+      testReply.setOnClickListener(v->runReplyWithText());
       testLike.setOnClickListener(v->startRepeatedLike());
       stopTimer.setOnClickListener(v->stopRepeatedDetection());
 
@@ -57,6 +61,65 @@ public class MainActivity extends Activity {
         public void onStartTrackingTouch(SeekBar s){}
         public void onStopTrackingTouch(SeekBar s){}
       });
+
+      divider.setOnTouchListener(new View.OnTouchListener(){
+        float downY; int startHeight;
+        public boolean onTouch(View v, android.view.MotionEvent e){
+          if(e.getAction()==MotionEvent.ACTION_DOWN){ downY=e.getRawY(); startHeight=appPanel.getHeight(); return true; }
+          if(e.getAction()==MotionEvent.ACTION_MOVE){
+            int h=(int)(startHeight+(e.getRawY()-downY));
+            int min=(int)(110*getResources().getDisplayMetrics().density);
+            int max=(int)(getResources().getDisplayMetrics().heightPixels*0.70f);
+            h=Math.max(min,Math.min(max,h));
+            appPanel.getLayoutParams().height=h; appPanel.getLayoutParams().weight=0; appPanel.requestLayout(); return true;
+          }
+          if(e.getAction()==MotionEvent.ACTION_UP){
+            if(Math.abs(e.getRawY()-downY)<12) setFullscreen(true);
+            return true;
+          }
+          return true;
+        }
+      });
+      collapseBtn.setOnClickListener(v->setFullscreen(false));
+    }
+
+    void setFullscreen(boolean full){
+      if(full){
+        appPanel.setVisibility(View.GONE);
+        divider.setVisibility(View.GONE);
+        collapseBtn.setVisibility(View.VISIBLE);
+        webContainer.setLayoutParams(new FrameLayout.LayoutParams(-1,0,Gravity.BOTTOM));
+      }else{
+        appPanel.setVisibility(View.VISIBLE);
+        divider.setVisibility(View.VISIBLE);
+        collapseBtn.setVisibility(View.GONE);
+        webContainer.setLayoutParams(new FrameLayout.LayoutParams(-1,0,Gravity.BOTTOM));
+      }
+      webContainer.requestLayout();
+    }
+
+    void runReplyWithText(){
+      String text=commentInput.getText().toString().trim();
+      if(text.isEmpty()){
+        status.setText("اكتب نص الـReply أولًا");
+        commentInput.requestFocus();
+        return;
+      }
+      status.setText("جاري البحث عن أول Reply...");
+      web.evaluateJavascript(buildReplyJs(text),val->{
+        try{
+          JSONObject o=new JSONObject(unquote(val));
+          results.setText(o.toString(2));
+          status.setText(o.optString("message","انتهى Reply"));
+        }catch(Exception e){ results.setText(val); status.setText("انتهى التنفيذ"); }
+      });
+    }
+
+    String buildReplyJs(String replyText){
+      String safe=JSONObject.quote(replyText);
+      return "(()=>{const keys=['reply','replies','رد','الرد','الردود','رد على','عرض الردود'];const norm=s=>(s||'').replace(/\\s+/g,' ').trim();const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];let hit=null,best=-1;"+
+      "for(const e of els){const q=e.getBoundingClientRect();if(q.width<=0||q.height<=0)continue;const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),hay=(t+' '+a+' '+title).toLowerCase();let score=0;for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(t.toLowerCase()===x.toLowerCase())score+=80;if(title.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}if(score>best){best=score;hit=e;}}"+
+      "if(!hit)return JSON.stringify({ok:false,message:'لم يتم العثور على Reply ظاهر'});hit.scrollIntoView({block:'center',inline:'center'});hit.click();setTimeout(()=>{const inputs=[...document.querySelectorAll('[contenteditable=true],textarea,input')].filter(x=>{const q=x.getBoundingClientRect();return q.width>0&&q.height>0});const box=inputs[inputs.length-1];if(box){box.focus();const val="+safe+";if(box.tagName==='TEXTAREA'||box.tagName==='INPUT'){box.value=val;box.dispatchEvent(new Event('input',{bubbles:true}));}else{document.execCommand('insertText',false,val);box.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:val}));}}},700);return JSON.stringify({ok:true,clicked:true,message:'تم الضغط على أول Reply وتجهيز خانة الرد للنص المدخل. راجع النص واضغط إرسال من Facebook.',text:"+safe+"});})()";
     }
 
     void setSpacer(int dp){

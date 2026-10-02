@@ -1,20 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
-        <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="جاهز للفحص" android:textSize="14sp" android:padding="4dp"/>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <LinearLayout android:id="@+id/appPanel" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
+        <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="جاهز للفحص" android:textSize="14sp" android:padding="4dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/scan" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="فحص الصفحة"/>
-            <Button android:id="@+id/testReply" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="اختبار Reply"/>
+            <Button android:id="@+id/testReply" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Reply"/>
             <Button android:id="@+id/testLike" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Like"/>
         </LinearLayout>
+        <EditText android:id="@+id/commentInput" android:layout_width="match_parent" android:layout_height="70dp"
+            android:gravity="top|start" android:inputType="textMultiLine" android:hint="اكتب نص الـReply هنا"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <EditText android:id="@+id/intervalInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="number" android:text="10" android:hint="الفاصل الزمني بالثواني"/>
+            <EditText android:id="@+id/intervalInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:inputType="number" android:text="10" android:hint="الفاصل الزمني بالثواني"/>
             <Button android:id="@+id/stopTimer" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="إيقاف"/>
         </LinearLayout>
-        <TextView android:id="@+id/spacerValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="المسافة: 40dp" android:textSize="12sp"/>
+        <TextView android:id="@+id/spacerValue" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="المسافة: 40dp" android:textSize="12sp"/>
         <SeekBar android:id="@+id/spacerSeek" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progress="40"/>
         <View android:id="@+id/spacer" android:layout_width="match_parent" android:layout_height="40dp"/>
-        <TextView android:id="@+id/results" android:layout_width="match_parent" android:layout_height="160dp" android:background="#F4F4F4" android:padding="8dp" android:textIsSelectable="true" android:textSize="12sp" android:gravity="top"/>
+        <TextView android:id="@+id/results" android:layout_width="match_parent" android:layout_height="120dp"
+            android:background="#F4F4F4" android:padding="8dp" android:textIsSelectable="true" android:textSize="12sp" android:gravity="top"/>
     </LinearLayout>
-    <WebView android:id="@+id/web" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
-</LinearLayout>
+
+    <LinearLayout android:id="@+id/webContainer" android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_gravity="bottom" android:orientation="vertical" android:layout_weight="1">
+        <TextView android:id="@+id/divider" android:layout_width="match_parent" android:layout_height="48dp"
+            android:background="#DDDDDD" android:gravity="center" android:text="اسحب لأعلى/لأسفل — اضغط للتكبير"
+            android:textSize="13sp" android:textStyle="bold" android:clickable="true"/>
+        <WebView android:id="@+id/web" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+    </LinearLayout>
+
+    <Button android:id="@+id/collapseBtn" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|end" android:text="تصغير ↙" android:visibility="gone" android:elevation="8dp"/>
+</FrameLayout>
