@@ -14,7 +14,7 @@ public class MainActivity extends Activity {
     Button scan,testReply,testLike,stopTimer,collapseBtn;
     EditText intervalInput,commentInput;
     LinearLayout appPanel;
-    FrameLayout webContainer;
+    LinearLayout webContainer;
     View divider;
     View spacer;
     SeekBar spacerSeek;
@@ -98,8 +98,6 @@ public class MainActivity extends Activity {
         collapseBtn.setVisibility(View.GONE);
         FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(-1,0);
         lp.gravity=Gravity.BOTTOM;
-        webContainer.setLayoutParams(lp);
-        webContainer.setLayoutParams(lp);
         webContainer.setLayoutParams(lp);
         webContainer.requestLayout();
       }
