@@ -100,7 +100,6 @@ public class MainActivity extends Activity {
       runOnUiThread(new Runnable(){ public void run(){
         if(results==null)return;
         results.append((results.length()>0?"\n":"")+msg);
-        results.setSelection(results.length());
         status.setText(msg);
       }});
     }
