@@ -46,7 +46,7 @@ public class MainActivity extends Activity {
       web.loadUrl("https://www.facebook.com/");
 
       scan.setOnClickListener(v->runScan());
-      testReply.setOnClickListener(v->startRepeatedReply());
+      testReply.setOnClickListener(v->runReplyAccessTest());
       testLike.setOnClickListener(v->startRepeatedLike());
       stopTimer.setOnClickListener(v->stopRepeatedDetection());
 
@@ -131,6 +131,103 @@ public class MainActivity extends Activity {
       };
 
       handler.post(timerTask);
+    }
+
+    void appendLog(String message){
+      if(results==null)return;
+      String old=results.getText().toString();
+      String[] lines=old.split("\\n");
+      StringBuilder sb=new StringBuilder();
+      int start=Math.max(0,lines.length-11);
+      for(int i=start;i<lines.length;i++){
+        if(lines[i].trim().length()>0)sb.append(lines[i]).append("\n");
+      }
+      sb.append(message);
+      results.setText(sb.toString());
+      results.post(new Runnable(){@Override public void run(){results.requestFocus();}});
+    }
+
+    void runReplyAccessTest(){
+      stopRepeatedDetection();
+      appendLog("\n--- اختبار الوصول إلى Reply ---");
+      status.setText("1/4 جاري البحث عن Like للعميل...");
+
+      web.evaluateJavascript(buildReplyAccessTestLikeJs(),new ValueCallback<String>(){
+        @Override public void onReceiveValue(String val){
+          try{
+            JSONObject o=new JSONObject(unquote(val));
+            appendLog("\n"+o.optString("message"));
+            if(!o.optBoolean("ok")){
+              status.setText("لم نصل إلى Reply: لم يتم العثور على Like");
+              return;
+            }
+            status.setText("2/4 تم الضغط على Like — انتظار ظهور Reply...");
+            new Handler().postDelayed(new Runnable(){
+              @Override public void run(){findAndClickReplyNearLike();}
+            },900);
+          }catch(Exception e){
+            appendLog("\nتعذر قراءة نتيجة خطوة Like: "+e.getMessage());
+            status.setText("فشل اختبار Reply");
+          }
+        }
+      });
+    }
+
+    void findAndClickReplyNearLike(){
+      appendLog("\n3/4 جاري البحث عن Reply قريب من نفس مكان Like...");
+      status.setText("3/4 البحث عن Reply...");
+      web.evaluateJavascript(buildFindReplyNearLikeJs(),new ValueCallback<String>(){
+        @Override public void onReceiveValue(String val){
+          try{
+            JSONObject o=new JSONObject(unquote(val));
+            appendLog("\n"+o.optString("message"));
+            if(o.optBoolean("ok")){
+              status.setText("4/4 تم الضغط على Reply — الاختبار توقف هنا");
+              appendLog("\nالاختبار انتهى: لم يتم كتابة أو إرسال أي رد.");
+            }else{
+              status.setText("لم يتم العثور على Reply");
+            }
+          }catch(Exception e){
+            appendLog("\nتعذر قراءة نتيجة البحث عن Reply: "+e.getMessage());
+            status.setText("فشل اختبار Reply");
+          }
+        }
+      });
+    }
+
+    String buildReplyAccessTestLikeJs(){
+      return "(()=>{const keys=['like','likes','إعجاب','اعجاب','أعجبني'];"+
+      "const norm=s=>(s||'').replace(/\\s+/g,' ').trim();"+
+      "const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];"+
+      "let hit=null,best=-1;"+
+      "for(const e of els){const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),pressed=norm(e.getAttribute('aria-pressed')),q=e.getBoundingClientRect();"+
+      "if(q.width<=0||q.height<=0)continue;const hay=(t+' '+a+' '+title).toLowerCase();"+
+      "if(pressed==='true')continue;if(/unlike|remove like|إلغاء الإعجاب|إلغاء اعجاب/.test(hay))continue;let score=0;"+
+      "for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(title.toLowerCase()===x.toLowerCase())score+=80;if(t.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}"+
+      "if((e.getAttribute('role')==='button'||e.tagName==='BUTTON')&&score>0)score+=20;if(score>best){best=score;hit=e;}}"+
+      "if(!hit)return JSON.stringify({ok:false,message:'لم يتم العثور على Like صالح ظاهر'});"+
+      "const q=hit.getBoundingClientRect();window.__replyTestLikePoint={x:q.left+q.width/2,y:q.top+q.height/2};"+
+      "hit.scrollIntoView({block:'center',inline:'center'});hit.click();"+
+      "return JSON.stringify({ok:true,message:'تم الضغط على Like للعميل؛ سنبحث عن Reply قريب من نفس الموضع'});})()";
+    }
+
+    String buildFindReplyNearLikeJs(){
+      return "(()=>{const norm=s=>(s||'').replace(/\\s+/g,' ').trim();"+
+      "const keys=['reply','replies','رد','الرد','الردود','رد على','عرض الردود'];"+
+      "const base=window.__replyTestLikePoint||null;"+
+      "const els=[...document.querySelectorAll('button,[role=button],[role=link],a,[aria-label],div[tabindex]')];"+
+      "let near=null,nearScore=-1,nearDist=999999,any=null,anyScore=-1;"+
+      "for(const e of els){const t=norm(e.innerText),a=norm(e.getAttribute('aria-label')),title=norm(e.getAttribute('title')),q=e.getBoundingClientRect();"+
+      "if(q.width<=0||q.height<=0)continue;const hay=(t+' '+a+' '+title).toLowerCase();let score=0;"+
+      "for(const x of keys){if(a.toLowerCase()===x.toLowerCase())score+=100;if(title.toLowerCase()===x.toLowerCase())score+=80;if(t.toLowerCase()===x.toLowerCase())score+=70;if(hay.includes(x.toLowerCase()))score+=10;}"+
+      "if(score<=0)continue;if((e.getAttribute('role')==='button'||e.tagName==='BUTTON'))score+=20;"+
+      "if(score>anyScore){anyScore=score;any=e;}"+
+      "if(base){const cx=q.left+q.width/2,cy=q.top+q.height/2,dx=Math.abs(cx-base.x),dy=Math.abs(cy-base.y),dist=Math.sqrt(dx*dx+dy*dy);"+
+      "if(dx<=260&&dy<=180){let ns=score+(300-Math.min(dist,300));if(ns>nearScore){nearScore=ns;near=e;nearDist=dist;}}}"+
+      "}"+
+      "let hit=near||any;if(!hit)return JSON.stringify({ok:false,message:'لم يتم العثور على Reply قابل للنقر'});"+
+      "const q=hit.getBoundingClientRect();hit.scrollIntoView({block:'center',inline:'center'});hit.click();"+
+      "return JSON.stringify({ok:true,message:'تم الضغط على Reply القريب من Like'+(near?' (مطابقة مكانية)':' (بحث عام)'),distance:near?Math.round(nearDist):null,text:norm(hit.innerText),aria:norm(hit.getAttribute('aria-label'))});})()";
     }
 
     void startRepeatedReply(){
