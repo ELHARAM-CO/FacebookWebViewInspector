@@ -7,7 +7,7 @@
             <Button android:id="@+id/testReply" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Reply"/>
             <Button android:id="@+id/testLike" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Like"/>
         </LinearLayout>
-        <EditText android:id="@+id/replyInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="اكتب نص الـReply هنا" android:inputType="textCapSentences|textMultiLine" android:minLines="2" android:maxLines="4" android:gravity="top"/>
+        <EditText android:id="@+id/replyInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="اكتب نص الرد هنا" android:inputType="textMultiLine" android:minLines="2" android:maxLines="4" android:gravity="top"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <EditText android:id="@+id/intervalInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="number" android:text="10" android:hint="الفاصل الزمني بالثواني"/>
             <Button android:id="@+id/stopTimer" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="إيقاف"/>
